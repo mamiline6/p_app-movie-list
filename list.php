@@ -1,42 +1,77 @@
 <?php
+/**
+ * My リスト検索/一覧表示
+ * - ローカルのデータベース（watch_list）から映画情報を検索/表示する
+ * - 検索は映画のタイトルを元にDB接続しその結果を表示する
+ * - 結果は映画ポスターと映画タイトルを一覧で表示する
+ */
 header("Content-Type:text/html;charset=utf-8");
-// require_once("../functions/userfunctions.php");
-require_once("Dao.php");
+require_once('./functions/userfunctions.php');
+require_once('./config/config.php');
+require_once('Dao.class.php');
 
-$app_title = "movie searcher";
-$page_title = "My List";
+$message = "気になる映画のタイトルを入力してください。";
 
-if(isset($_GET["title"])) {
-  try {
-    $dao = new dao();
-    $rows = $dao->selectByName($_GET["title"]);
+if (isset($_POST["search"])) {
 
-  } catch(PDOException $e) {
-    die("データベースエラー:".mb_convert_encoding($e->getMessage(), 'UTF-8', 'ASCII,JIS,UTF-8,CP51932,SJIS-win'));
-  } finally {
-    $dao->close();
+  if(isset($_POST['title']) && $_POST['title'] !== "") {
+    try {
+      $dao = new dao();
+      $rows = $dao->selectByName($_POST["title"]);
+      // var_dump("$rows");
+
+    } catch(PDOException $e) {
+      die("データベースエラー:".mb_convert_encoding($e->getMessage(), 'UTF-8', 'ASCII,JIS,UTF-8,CP51932,SJIS-win'));
+
+    } finally {
+      $dao->close();
+    }
+
+  } else {
+    // $message = $list_name."から「映画タイトル」で絞り込めます。"; // 案内メッセージ表示用
   }
+
+// } elseif(isset($_POST['title']) && $_POST['title'] !== "") {
+//   try {
+//     $dao = new dao();
+//     $rows = $dao->selectByName($_POST["title"]);
+
+//     if($rows === false) {
+//       $message = "入力がないです";
+//     }
+
+//   } catch(PDOException $e) {
+//     die("データベースエラー:".mb_convert_encoding($e->getMessage(), 'UTF-8', 'ASCII,JIS,UTF-8,CP51932,SJIS-win'));
+
+//   } finally {
+//     $dao->close();
+//   }
+// } elseif ($_POST['title'] == "null") {
+//   $message = "気になる映画のタイトルを入力してください。";
+
 } else {
   $message = "不正なアクセスです。";
 }
+
+$page_title = $list_name;
 ?>
-<?php require_once "./_inc/_header-list.php"; ?>
+<?php require_once "./_inc/_header.php"; ?>
+<div class="flex justify-center text-white pt-10">
+        <?php //if(isset($_POST["title"])): ?>
+          <?php if(isset($data["results"])): ?>
+            <p class="text-white">「<?php echo $_POST["title"]; ?>」の検索結果<?php echo count($data["results"]); ?>件です。</p>
+          <?php endif; ?>
+        <?php //if($_POST["title"] == ""): ?>
+          <p class="text-white"><?php echo $message; ?></p>
+        <?php // endif; ?>
+        <?php // else: ?>
+          <p><?php // echo $message; ?></p>
+        <?php // endif; ?>
+</div>
+
+
       <div class="flex flex-wrap justify-center pl-10 pr-10">
-        <?php if(isset($_POST["search"]) || isset($_GET["search"])): ?>
-
-          <!-- <div class="flex justify-center text-white pt-10">
-            <?php if(isset($_GET["title"])): ?>
-              <?php if(isset($data["results"])): ?>
-                <p class="">「<?php echo $_GET["title"]; ?>」の検索結果<?php echo count($data["results"]); ?>件です。</p>
-              <?php endif; ?>
-            <?php else: ?>
-              <p class=""><?php echo $message; ?></p>
-            <?php endif; ?>
-          </div> -->
-
-          <!-- <?php if(!empty($message)): ?><p class="flex-none w-full text-center text-white mt-5"><?php echo $message; ?></p><?php endif; ?>
-          <?php if(!empty($rows)): ?><p class="flex-none w-full text-center text-white mt-5 mb-5"><?php echo '該当データは<b class="text-lg">'.count($rows).'</b>件です</p>'; ?><?php endif; ?> -->
-
+          <?php if(isset($_POST["search"])): ?>
             <?php if(empty($rows) === false): ?>
               <?php foreach($rows as $row): ?>
                 <div class="pt-5 pb-5 w-1/3 md:w-1/4 min-w-min p-4"><a href="detail.php?id=<?php echo $row["id"]; ?>">
@@ -57,4 +92,5 @@ if(isset($_GET["title"])) {
       </div>
     </main>
   </div>
-<?php require_once "./_inc/_footer-list.php"; ?>
+<?php require_once "./_inc/_search-form.php"; ?>
+<?php require_once "./_inc/_footer.php"; ?>
